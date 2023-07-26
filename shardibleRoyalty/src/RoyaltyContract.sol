@@ -22,10 +22,10 @@ contract Counter is Ownable2Step,ReentrancyGuard {
     bytes32 public currentRootHash;
 
 
-    uint256 public ownerRoyaltyPercentage = 80;
+    uint256 public ownerRoyaltyPercentage = 8000;
 
 
-    uint256 constant denominator = 100; 
+    uint256 constant denominator = 10_000; 
 
 
 
