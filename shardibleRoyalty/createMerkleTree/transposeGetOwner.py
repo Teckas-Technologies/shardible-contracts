@@ -3,6 +3,7 @@ import json
 url = "https://api.transpose.io/nft/owners-by-contract-address"
 headers = {
     'Content-Type': 'application/json',
+    #Enter your api key
     'X-API-KEY': 'yOd3pB5GwS8111pmNjF7N0sWiYUrVPjs',
 }
 params = {
@@ -39,5 +40,5 @@ while True:
 data_list = [[owner, token_ids] for owner, token_ids in globalDict.items()]
 json_data = json.dumps(data_list)
 # print(data_list)
-with open('data.json', "w+") as file:
+with open('NftOwnerdata.json', "w+") as file:
     file.write(json_data + "\n")
