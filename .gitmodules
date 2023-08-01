@@ -1,3 +1,5 @@
 [submodule "shardibleGasMinting/lib/forge-std"]
 	path = shardibleGasMinting/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/forge-std"]
+	branch = v1.6.0
