@@ -3,3 +3,6 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/forge-std"]
 	branch = v1.6.0
+[submodule "shardibleGasMinting/lib/ERC1155-with-EIP2981-for-OpenSea"]
+	path = shardibleGasMinting/lib/ERC1155-with-EIP2981-for-OpenSea
+	url = https://github.com/alxrnz2/ERC1155-with-EIP2981-for-OpenSea
