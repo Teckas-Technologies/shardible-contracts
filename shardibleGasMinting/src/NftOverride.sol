@@ -1,26 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
-import "lib/openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "lib/openzeppelin-contracts/contracts/interfaces/IERC2981.sol";
 import "lib/openzeppelin-contracts/contracts/token/common/ERC2981.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 
-//@todo: Set uri
-//Todo: Update access control
+//Todo: Update supportsInterface control
 
 //Give explicit permission to mint new tokens and list it directly 
-contract SHARDIBLECOLLECTION is ERC1155,ERC2981,AccessControl{
+contract SHARDIBLE is ERC1155Supply,ERC2981,AccessControl{
     bytes32 constant wrappedNftROLE = keccak256("WRAPPERCONTRACT");
-    //@todo: Update this 
+
+    using Strings for uint256;
+
+    string private _baseURI = "";
+
+    mapping(uint256 => string) private _tokenURIs;
 
     constructor()ERC1155(""){
 
-        }
+    }
 
-    //Todo: Update access control
-    function supportsInterface(bytes4 interfaceId) public view override(ERC1155, ERC2981) returns (bool) {
+    //Todo: Update the ovveride currently unsafe
+    function supportsInterface(bytes4 interfaceId) public view override(ERC1155, ERC2981,AccessControl) returns (bool) {
         return interfaceId == type(IERC1155).interfaceId || super.supportsInterface(interfaceId);
     } 
 
@@ -61,6 +67,32 @@ contract SHARDIBLECOLLECTION is ERC1155,ERC2981,AccessControl{
         _resetTokenRoyalty(tokenId);
 
     }
+
+
+    function uri(uint256 tokenId) public view  override returns (string memory) {
+        string memory tokenURI = _tokenURIs[tokenId];
+
+        // If token URI is set, concatenate base URI and tokenURI (via abi.encodePacked).
+        return bytes(tokenURI).length > 0 ? string(abi.encodePacked(_baseURI, tokenURI)) : super.uri(tokenId);
+    }
+
+
+    function setPerTokenUri(uint256 tokenId,string memory tokenURI) external onlyRole(wrappedNftROLE){
+        _setURI(tokenId,tokenURI);
+    }
+
+    function _setURI(uint256 tokenId, string memory tokenURI) internal virtual {
+        _tokenURIs[tokenId] = tokenURI;
+        emit URI(uri(tokenId), tokenId);
+    }
+
+    //Wom't be used but just incase
+    function setGlobalURI(string memory globalURI) external onlyRole(wrappedNftROLE){
+        _setURI(globalURI);
+    }
+
+
+
 
 
 
