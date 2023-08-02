@@ -6,3 +6,8 @@
 [submodule "shardibleGasMinting/lib/ERC1155-with-EIP2981-for-OpenSea"]
 	path = shardibleGasMinting/lib/ERC1155-with-EIP2981-for-OpenSea
 	url = https://github.com/alxrnz2/ERC1155-with-EIP2981-for-OpenSea
+[submodule "shardibleGasMinting/lib/openzeppelin-contracts"]
+	path = shardibleGasMinting/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "lib/openzeppelin-contracts"]
+	branch = v4.9.3
