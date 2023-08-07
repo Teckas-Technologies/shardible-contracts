@@ -3,6 +3,8 @@
 //@todo: Whether set new creator is necessary
 
 //@todo: Option to change the creator address
+
+//@todo: Option to update marketplace address
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "src/TokenIdentifiers.sol";
@@ -12,11 +14,15 @@ contract wrappedNftV2 is ReentrancyGuard,AccessControl {
     using TokenIdentifiers for uint256;
 
     SHARDIBLE nftAddress;   
+    address marketplaceAddress;
+
 
     bytes32 constant OWNER = keccak256("ShardibleMarketplaceOwners");
 
+
     mapping(uint256 => bool) private _isPermanentURI;
 
+    
     struct MintParams{
         address to;
         uint256 id;
@@ -26,6 +32,28 @@ contract wrappedNftV2 is ReentrancyGuard,AccessControl {
         //@note: Should be in basis points
         uint96 royaltyFeeNumerator;
 
+    }
+
+
+    struct MintAndListParams{
+        uint256 amountToList;
+        uint256 pricePerNft;
+        uint128 startTimeStamp;
+        uint128 endTimeStamp;
+        address currency;
+        bool reserved;
+    }
+
+    //Listing params for the direct listing logic 
+    struct ListingParameters {
+        address assetContract;
+        uint256 tokenId;
+        uint256 quantity;
+        address currency;
+        uint256 pricePerToken;
+        uint128 startTimestamp;
+        uint128 endTimestamp;
+        bool reserved;
     }
 
     modifier creatorOnly(uint256 _id){
@@ -62,7 +90,7 @@ contract wrappedNftV2 is ReentrancyGuard,AccessControl {
     event PermanentURI(string  uri,uint256 tokenId);
 
     //Only the creator can mint the nft 
-    function mintNft(MintParams memory _mintingParams) public nonReentrant creatorOnly(_mintingParams.id) supplyCap(_mintingParams.id,_mintingParams.quantity) {
+    function mintNft(MintParams memory _mintingParams,string memory _tokenURI) public nonReentrant creatorOnly(_mintingParams.id) supplyCap(_mintingParams.id,_mintingParams.quantity) {
         
 
         nftAddress.mint(_mintingParams.to,_mintingParams.id,_mintingParams.quantity,_mintingParams.data);
@@ -71,9 +99,44 @@ contract wrappedNftV2 is ReentrancyGuard,AccessControl {
         //Set Token Royalty For the Address
         nftAddress.setTokenRoyalty(_mintingParams.id,_mintingParams.royaltyReceiver,_mintingParams.royaltyFeeNumerator);
 
+        setUri(_mintingParams.id,_tokenURI);
+
 
         emit NewNftMint(msg.sender,_mintingParams.id,_mintingParams.quantity);
 
+
+    }
+
+    //Using the erc2771 to add this address as the trusted forwarded to call the direct listing
+
+    //First mint's the nft to the owner and then proceeds to the listing because the listing will fail if the owner transfer's out the nft before listing the nft (using on erc1155 received) 
+    function mintAndList(MintParams memory _mintingParams,MintAndListParams memory _mintAndListParams,string memory _tokenURI) public nonReentrant creatorOnly(_mintingParams.id) supplyCap(_mintingParams.id,_mintingParams.quantity){
+        //First mint the nft to the address and 
+
+        nftAddress.mint(_mintingParams.to,_mintingParams.id,_mintingParams.quantity,_mintingParams.data);
+
+
+        nftAddress.setTokenRoyalty(_mintingParams.id,_mintingParams.royaltyReceiver,_mintingParams.royaltyFeeNumerator);
+
+        emit NewNftMint(msg.sender,_mintingParams.id,_mintingParams.quantity);
+
+        setUri(_mintingParams.id,_tokenURI);
+
+        ListingParameters memory _listinData = ListingParameters({
+        assetContract: address(nftAddress),
+        tokenId: _mintingParams.id,
+        quantity: _mintAndListParams.amountToList,
+        currency: _mintAndListParams.currency,
+        pricePerToken: _mintAndListParams.pricePerNft,
+        startTimestamp: _mintAndListParams.startTimeStamp,
+        endTimestamp: _mintAndListParams.endTimeStamp,
+        reserved: _mintAndListParams.reserved
+    });
+
+        
+        (bool success,bytes memory data) = marketplaceAddress.call(abi.encodeWithSignature("createListing(ListingParameters)", 
+        abi.encodePacked(_listinData,msg.sender)));
+        require(success,"Listing call failed");
 
     }
 
